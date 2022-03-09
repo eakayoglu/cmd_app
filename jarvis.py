@@ -1,11 +1,25 @@
-# doskey jarvis=python "C:\pyscripts\mechsoft.py" $*
+# doskey jarvis=python "C:\pyscripts\jarvis.py" $*
 
 import win32clipboard
 import argparse
 import os
 import json
+import requests
 from tabulate import tabulate
 from datetime import date
+
+# create card
+def create_trello_card(card_name):
+    create_card_end_point = 'https://api.trello.com/1/cards'
+    jsonObj = {
+                "key":'TRELLO_API_KEY',
+                "token":'TRELLO_TOKEN', 
+                "idList":'TRELLO_ID_LIST',
+                "name":card_name,
+                "desc":""}
+
+    requests.post(create_card_end_point, json=jsonObj)
+    print('Card created.')
 
 def clean_chars(tx):
     '''
@@ -45,13 +59,13 @@ def read_json():
     if JSON File is not exist, the file will be created with first record.
     First record is used for header
     '''
-    if os.path.exists(jsonlocation):
-        with open(jsonlocation, 'r', encoding='utf-8') as f:
-            return json.loads(f.read())
-    else:
+    if not os.path.exists(jsonlocation):
         # Create new list with first row which is used for header.
         new_list = [{"PROJECT": "PROJECT", "USERNAME": "USERNAME", "PASSWORD": "PASSWORD"}]
         create_json(new_list)
+        
+    with open(jsonlocation, 'r', encoding='utf-8') as f:
+        return json.loads(f.read())
 
 def main():
     # Parser
@@ -62,6 +76,7 @@ def main():
     parser.add_argument('-s','--show', action = 'store_true', help = '** Using with find argument. ** Use -s if you want to show specified project records present in the vault.')
     parser.add_argument('-u','--copyusername', action = 'store_true', help = '** Using with find argument. ** Use -u if you want to copy specified project usename to clipboard present in the vault.')
     parser.add_argument('--delete', type=str, help = 'Use --delete if you want to delete specified project name present in the vault')
+    parser.add_argument('-tr','--trello', type=str, help = 'Use -t if you want to create a card specified')
 
     subparser = parser.add_subparsers(dest='command')
     rnew = subparser.add_parser('new')
@@ -125,6 +140,9 @@ def main():
         else:
             print(f'\n\tProject {bdelete} is not found :/')
 
+    if args.trello:
+        create_trello_card(args.trello)
+
     if args.command == 'new':
         project_found = False
         nproject = clean_chars(args.project)
@@ -157,12 +175,10 @@ def main():
     elif args.command == 'todo':
         list_txt_file = os.path.join(desktop_path, args.name + '.txt')
         if args.listitems:
-            print('---------------------_ To Do List _------------------------------')
             with open(list_txt_file, "r") as myfile:
                 items = myfile.read()
                 print(items)
-            print('-----------------------------------------------------------------')
-        
+
         if args.do:
             if not os.path.exists(list_txt_file):
                 with open(list_txt_file, "w") as myfile:
@@ -173,8 +189,8 @@ def main():
 
 if __name__ == '__main__':
     dt = date.today().strftime("%y%m%d")
-    list_name = f'daily_notes{dt}'
-    desktop_path = os.path.join(os.environ['USERPROFILE'], 'Desktop')
+    list_name = f'daily_notes_{dt}'
+    desktop_path = os.path.join(os.environ['USERPROFILE'], 'Desktop', 'Daily_Notes')
     jsonlocation = os.path.realpath(os.path.join(os.path.dirname(__file__),'vault.json'))
 
     main()
