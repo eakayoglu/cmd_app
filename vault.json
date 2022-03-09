@@ -3,5 +3,10 @@
         "PROJECT": "PROJECT",
         "USERNAME": "USERNAME",
         "PASSWORD": "PASSWORD"
+    },
+    {
+        "PROJECT": "Sample Project",
+        "USERNAME": "emre.akayoglu",
+        "PASSWORD": "P4ssw0rd"
     }
 ]
